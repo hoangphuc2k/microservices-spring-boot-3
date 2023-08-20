@@ -1,0 +1,76 @@
+version: '3.7'
+services:
+  eureka-server:
+    container_name: eureka-server
+    build:
+      context: ./eureka_server
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.register-with-eureka=false
+      - eureka.client.fetch-registry=false
+    networks:
+      - microservice-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "8761:8761"
+
+  cloud-gateway:
+    container_name: cloud-gateway
+    build:
+      context: ./cloud-gateway
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
+      - eureka.client.instance.preferIpAddress=true
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=user-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://user-service:8082  # Use the service name as the hostname
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/users/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=authentication-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://authentication-service:8081  # Use the service name as the hostname
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/authentication/**
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    ports:
+      - "8080:8080"
+
+  user-service:
+    container_name: user-service
+    build:
+      context: ./service_user
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
+      - eureka.client.instance.preferIpAddress=true
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    ports:
+      - "8082:8082"
+
+  authentication-service:
+    container_name: authentication-service
+    build:
+      context: ./service_authentication
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
+      - eureka.client.instance.preferIpAddress=true
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    ports:
+      - "8081:8081"
+
+networks:
+  microservice-network:
