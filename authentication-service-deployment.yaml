@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.30.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: authentication-service
+  name: authentication-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: authentication-service
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.30.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/microservices-spring-boot-3-microservice-network: "true"
+        io.kompose.service: authentication-service
+    spec:
+      containers:
+        - env:
+            - name: eureka.client.instance.preferIpAddress
+              value: "true"
+            - name: eureka.client.service-url.defaultZone
+              value: http://eureka-server:8761/eureka
+            - name: eureka.client.fetch-registry
+              value: "true"
+          image: hoangphucdvl/microservices-spring-boot-3-authentication-service:latest
+          name: authentication-service
+          ports:
+            - containerPort: 8081
+              hostPort: 8081
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}

@@ -3,6 +3,7 @@ package com.demo.authenticationservice.controllers;
 
 import com.demo.authenticationservice.clients.UserClient;
 import com.demo.authenticationservice.models.UserResponse;
+import com.demo.authenticationservice.services.GrpcClientServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,8 +18,16 @@ public class AuthenticationController {
   @Autowired
   private UserClient userClient;
 
-  @GetMapping("/profile/{username}")
-  public ResponseEntity<UserResponse> getUserProfile(@PathVariable("username") String username) {
+  @Autowired
+  private GrpcClientServiceImpl grpcClientService;
+
+  @GetMapping("grpc/profile/{username}")
+  public ResponseEntity<UserResponse> getUserProfileFromGRPC(@PathVariable("username") String username) {
+    return ResponseEntity.ok(grpcClientService.getUserByEmail(username));
+  }
+
+  @GetMapping("http/profile/{username}")
+  public ResponseEntity<UserResponse> getUserProfileFromHttp(@PathVariable("username") String username) {
     return ResponseEntity.ok(userClient.getUserByUserName(username));
   }
 }

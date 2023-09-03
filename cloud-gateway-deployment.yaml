@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.30.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: cloud-gateway
+  name: cloud-gateway
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: cloud-gateway
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.30.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/microservices-spring-boot-3-microservice-network: "true"
+        io.kompose.service: cloud-gateway
+    spec:
+      containers:
+        - env:
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_0_ID
+              value: user-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0
+              value: Path=/users/**
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_0_URI
+              value: http://user-service:8082
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_1_ID
+              value: authentication-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0
+              value: Path=/authentication/**
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_1_URI
+              value: http://authentication-service:8081
+            - name: eureka.client.instance.preferIpAddress
+              value: "true"
+            - name: eureka.client.service-url.defaultZone
+              value: http://eureka-server:8761/eureka
+          image: hoangphucdvl/microservices-spring-boot-3-cloud-gateway:latest
+          name: cloud-gateway
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
